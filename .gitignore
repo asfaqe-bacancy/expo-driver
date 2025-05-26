@@ -1,10 +1,18 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# Learn more: https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# Dependencies
 node_modules/
+bun.lock
+bun.lockb
+package-lock.json
+yarn.lock
+yarn-error.log
+npm-debug.*
+yarn-debug.*
 
 # Expo
 .expo/
+.expo
 dist/
 web-build/
 expo-env.d.ts
@@ -16,27 +24,59 @@ expo-env.d.ts
 *.p8
 *.p12
 *.key
+*.keystore
 *.mobileprovision
+*/ios/Pods
+/with-router-menus/ios
+/with-router-menus/android
+/with-canary-react-19/ios
+/with-canary-react-19/android
 
 # Metro
 .metro-health-check*
 
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
 # macOS
 .DS_Store
-*.pem
 
-# local env files
+# Local env files
 .env*.local
+*/.env*.local
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 
+# App configs & misc
 app-example
 app.json
 ios/Podfile.lock
-yarn.lock
+
+# Web
+web-build
+web-report
+
+# Electron
+dist
+
+# Gatsby
+.cache
+with-gatsby/public
+
+# Next.js
+.next
+with-nextjs/out
+
+# Websockets
+*/backend/.env
+
+# SSL / Auth
+*.pem
+
+# Maintenance logs
+.sdk-upgrade-logs
+.sdk-fix-logs
+
+# Reports
+report.html
+
+# VS Code
+.vscode
