@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+      <string>com.expo.modules.backgroundtask.processing</string>
+    </array>
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
     <key>CFBundleDevelopmentRegion</key>
@@ -54,25 +58,25 @@
       <true/>
     </dict>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>We need your location to provide location-based services even when the app is in background</string>
+    <string>Allow $(PRODUCT_NAME) to use your location for navigation tracking.</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>We need your location to provide continuous location-based services</string>
+    <string>Allow $(PRODUCT_NAME) to use your location in the background for navigation tracking.</string>
     <key>NSLocationTemporaryUsageDescriptionDictionary</key>
     <dict>
       <key>LocationAccuracy</key>
       <string>We need your precise location to provide accurate location-based services</string>
     </dict>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>We need your location to provide location-based services when the app is in use</string>
-    <key>UIBackgroundModes</key>
-    <array>
-      <string>processing</string>
-      <string>fetch</string>
-      <string>location</string>
-    </array>
+    <string>Allow $(PRODUCT_NAME) to use your location while using the app.</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
+    </array>
+    <key>UIBackgroundModes</key>
+    <array>
+      <string>location</string>
+      <string>fetch</string>
+      <string>processing</string>
     </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>

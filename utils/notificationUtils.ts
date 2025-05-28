@@ -1,4 +1,5 @@
 import * as Notifications from "expo-notifications";
+import { router } from "expo-router";
 import { Alert } from "react-native";
 
 // Configure notification handler
@@ -28,37 +29,43 @@ export async function requestNotificationPermissions() {
 
 // Trigger destination reached notification
 export async function triggerDestinationReachedNotification() {
+  console.log("Triggering call --- ");
+
   const hasPermission = await requestNotificationPermissions();
-  if (hasPermission) {
+  if (!hasPermission) {
+    console.error("Notification permissions not granted");
+    return;
+  }
+  // Show notification immediately
+  try {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Destination Reached!",
-        body: "You have arrived at your destination. Please open the driver app.",
+        title: "Destination Reached",
+        body: "You have arrived at your destination!",
         sound: true,
-        priority: "high",
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+        data: { screen: 'delivery-complete' },
       },
-      trigger: null, // Show immediately
+      trigger: null,
     });
+  } catch (error) {
+    console.error('Error showing arrival notification:', error);
   }
 }
 
-// Calculate distance between two coordinates using Haversine formula
-export function calculateDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
-  const R = 6371e3; // Earth's radius in meters
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+export function setupNotificationHandler() {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
 
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c; // Distance in meters
+  // Handle notification response
+  Notifications.addNotificationResponseReceivedListener(response => {
+    if (response.notification.request.content.data?.screen === 'delivery-complete') {
+      router.replace('/deliverycomplete');
+    }
+  });
 }

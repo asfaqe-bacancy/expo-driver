@@ -1,153 +1,257 @@
-import { ThemedText } from "@/components/ThemedText";
-import {
-  Alert,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+
+import { Destination } from "@/constants/Destination";
+import { Coordinates } from "@/constants/Interface";
+import { Alert, FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface NavigationControlsProps {
-  startCoordinates: string;
-  setStartCoordinates: (text: string) => void;
-  driverCoordinates: string;
-  endCoordinates: string;
-  setEndCoordinates: (text: string) => void;
+  driverCoordinates: Coordinates | null;
+  destinations: Destination[];
+  selectedDestination: Destination | null;
+  onDestinationSelect: (destination: Destination) => void;
   showDirections: boolean;
   setShowDirections: (show: boolean) => void;
   travelTime: string;
   onStartNavigation: () => void;
+  activeNavigation: boolean;
+  onCompleteDelivery?: () => void;
 }
 
-export function NavigationControls({
-  startCoordinates,
-  setStartCoordinates,
+export const NavigationControls = ({
   driverCoordinates,
-  endCoordinates,
-  setEndCoordinates,
+  destinations,
+  selectedDestination,
+  onDestinationSelect,
   showDirections,
   setShowDirections,
   travelTime,
   onStartNavigation,
-}: NavigationControlsProps) {
+  activeNavigation,
+  onCompleteDelivery,
+}: NavigationControlsProps) => {
+  const handleShowRoute = () => {
+    if (!driverCoordinates) {
+      Alert.alert(
+        "Location Unavailable",
+        "Unable to get your current location. Please check your location settings and try again.",
+        [
+          { 
+            text: "Open Settings",
+            onPress: () => Linking.openSettings()
+          },
+          { text: "OK" }
+        ]
+      );
+      return;
+    }
+    setShowDirections(true);
+  };
+
+  const handleGoBack = () => {
+    if (activeNavigation) {
+      alert("Cannot go back while navigation is active");
+      return;
+    }
+    setShowDirections(false);
+  };
+
   return (
-    <View style={styles.inputContainer}>
-      <TextInput
-        style={styles.input}
-        value={startCoordinates}
-        onChangeText={(text) => {
-          setStartCoordinates(text);
-          setShowDirections(false);
-        }}
-        placeholder="Enter start coordinates (lat,lng)"
-        placeholderTextColor="#999"
-      />
-      <TouchableOpacity
-        style={styles.setLocationButton}
-        onPress={() => {
-          setStartCoordinates(driverCoordinates);
-          setShowDirections(false);
-        }}
-      >
-        <ThemedText style={styles.buttonText}>
-          Use Current Location as Start
-        </ThemedText>
-      </TouchableOpacity>
-      <TextInput
-        style={styles.input}
-        value={endCoordinates}
-        onChangeText={(text) => {
-          setEndCoordinates(text);
-          setShowDirections(false);
-        }}
-        placeholder="Enter end coordinates (lat,lng)"
-        placeholderTextColor="#999"
-      />
-      <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
-        <TouchableOpacity
-          style={[styles.button, { marginTop: 10 }]}
-          onPress={() => {
-            if (!startCoordinates || !endCoordinates) {
-              Alert.alert(
-                "Missing Coordinates",
-                "Please set both start and end coordinates"
-              );
-              return;
-            }
-            setShowDirections(true);
-          }}
-        >
-          <ThemedText style={styles.buttonText}>Show Route</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.button, { marginTop: 10 }]}
-          onPress={onStartNavigation}
-        >
-          <ThemedText style={styles.buttonText}>Start Navigation</ThemedText>
-        </TouchableOpacity>
-      </View>
-      <ThemedText style={styles.locationText}>
-        Driver's Location: {driverCoordinates || "Fetching location..."}
-      </ThemedText>
-      {showDirections && travelTime && (
-        <ThemedText style={[styles.locationText, { color: "#2196F3" }]}>
-          {travelTime}
-        </ThemedText>
+    <View style={styles.bottomSheet}>
+      {!showDirections ? (
+        // Destination selection view
+        <View>
+          <Text style={styles.sheetTitle}>Select Destination</Text>
+          <FlatList
+            data={destinations}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.destinationItem,
+                  selectedDestination?.id === item.id && styles.selectedDestination,
+                  activeNavigation && styles.disabledItem // Disable selection during active navigation
+                ]}
+                onPress={() => {
+                  if (activeNavigation) {
+                    alert("Cannot change destination during active navigation");
+                    return;
+                  }
+                  onDestinationSelect(item);
+                }}
+                disabled={activeNavigation} // Disable selection
+              >
+                <Text style={styles.destinationName}>{item.name}</Text>
+                <Text style={styles.destinationAddress}>{item.address}</Text>
+              </TouchableOpacity>
+            )}
+            style={styles.destinationsList}
+          />
+          {selectedDestination && !activeNavigation && (
+            <TouchableOpacity
+              style={styles.showRouteButton}
+              onPress={handleShowRoute}
+            >
+              <Text style={styles.buttonText}>
+                Show Route to {selectedDestination.name}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : (
+        // Directions and navigation view
+        <View>
+          <View style={styles.navigationHeader}>
+            <Text style={styles.destinationTitle}>
+              {selectedDestination?.name}
+            </Text>
+            <Text style={styles.destinationAddress}>
+              {selectedDestination?.address}
+            </Text>
+          </View>
+          
+          <View style={styles.routeContainer}>
+            <Text style={styles.travelTimeText}>{travelTime}</Text>
+            
+            {!activeNavigation && (
+              <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={handleGoBack}
+              >
+                <Text style={styles.backButtonText}>Back to destinations</Text>
+              </TouchableOpacity>
+            )}
+            
+            {activeNavigation ? (
+              <TouchableOpacity 
+                style={styles.completeButton} 
+                onPress={onCompleteDelivery}
+              >
+                <Text style={styles.buttonText}>Complete Delivery</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity 
+                style={styles.navigationButton} 
+                onPress={onStartNavigation}
+              >
+                <Text style={styles.buttonText}>Start Navigation</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
       )}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  inputContainer: {
+  bottomSheet: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: "white",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    paddingTop: 16,
+    maxHeight: 350,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
     elevation: 5,
   },
-  input: {
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-    borderRadius: 5,
-    backgroundColor: "white",
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "#333",
   },
-  button: {
-    backgroundColor: "#2196F3",
-    padding: 5,
-    borderRadius: 5,
-    alignItems: "center",
+  destinationsList: {
+    maxHeight: 200,
   },
-  setLocationButton: {
-    backgroundColor: "#4CAF50",
-    padding: 10,
-    borderRadius: 10,
+  destinationItem: {
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  selectedDestination: {
+    backgroundColor: "#f0f8ff",
+    borderLeftWidth: 4,
+    borderLeftColor: "#007AFF",
+  },
+  destinationName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  destinationAddress: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 3,
+  },
+  showRouteButton: {
+    backgroundColor: "#007AFF",
+    borderRadius: 8,
+    padding: 14,
     alignItems: "center",
-    marginVertical: 5,
+    marginTop: 16,
+  },
+  navigationButton: {
+    backgroundColor: "#007AFF",
+    borderRadius: 8,
+    padding: 14,
+    alignItems: "center",
+    width: "100%",
   },
   buttonText: {
     color: "white",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "bold",
   },
-  locationText: {
-    textAlign: "center",
+  routeContainer: {
+    alignItems: "center",
     marginTop: 10,
-    fontSize: 14,
-    color: "#666",
+  },
+  navigationHeader: {
+    alignItems: "center",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  destinationTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  travelTimeText: {
+    fontSize: 18,
+    marginBottom: 20,
+    fontWeight: "500",
+    color: "#333",
+  },
+  backButton: {
+    padding: 12,
+    marginBottom: 10,
+    width: "100%",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#007AFF",
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: "#007AFF",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  disabledItem: {
+    opacity: 0.5,
+  },
+  completeButton: {
+    backgroundColor: "#28a745",
+    borderRadius: 8,
+    padding: 14,
+    alignItems: "center",
+    width: "100%",
   },
 });
